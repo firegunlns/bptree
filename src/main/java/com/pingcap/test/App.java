@@ -1,5 +1,7 @@
 package com.pingcap.test;
 
+import java.util.Random;
+
 /**
  * Hello world!
  *
@@ -8,12 +10,20 @@ public class App
 {
     public static void main( String[] args )
     {
-        System.out.println( "Hello World!" );
-        BpTree bptree = new BpTree(5);
-        bptree.insert(97);
-        bptree.insert(92);
-        bptree.insert(16);
+        BpTree tree1 = new BpTree(3);
+        Random r = new Random(System.currentTimeMillis());
+        System.out.print("data:");
+        for (int i = 0; i < 10; i ++){
+            int x = r.nextInt(1000);
+            tree1.insert(x);
+            System.out.printf("%d,", x);
+        }
+        System.out.println();
 
-        //System.out.println(val);
+        tree1.walk();
+        tree1.scanAll();
+    }
+
+    void test1(){
     }
 }
