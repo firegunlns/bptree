@@ -1,0 +1,12 @@
+-------------------------------------------------------------------------------
+Test set: com.pingcap.test.AppTest
+-------------------------------------------------------------------------------
+Tests run: 3, Failures: 0, Errors: 2, Skipped: 0, Time elapsed: 0.091 s <<< FAILURE! - in com.pingcap.test.AppTest
+test1(com.pingcap.test.AppTest)  Time elapsed: 0.03 s  <<< ERROR!
+java.lang.IndexOutOfBoundsException: Index: 4, Size: 4
+	at com.pingcap.test.AppTest.test1(AppTest.java:30)
+
+test2(com.pingcap.test.AppTest)  Time elapsed: 0.006 s  <<< ERROR!
+java.lang.IndexOutOfBoundsException: Index: 3, Size: 3
+	at com.pingcap.test.AppTest.test2(AppTest.java:49)
+

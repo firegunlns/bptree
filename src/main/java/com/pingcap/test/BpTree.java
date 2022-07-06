@@ -4,7 +4,7 @@ import java.util.ArrayList;
 
 public class BpTree {
     final int MAX_LEVEL = 10240;
-    private int level = 5;
+    private int level = 3;
 
     Node root;
     public int getLevel(){
@@ -87,8 +87,10 @@ public class BpTree {
             // 复制next/last指针
             if (cur.children.size() == 0){
                 n1.next = n2;
-                n2.last = n1;
+                n1.last = cur.last;
+                
                 n2.next = cur.next;
+                n2.last = n1;
                 
                 if (cur.next != null)
                     n2.next.last = n2;
@@ -144,13 +146,15 @@ public class BpTree {
                 Node father = cur.father;
                 n1.father = n2.father = father;
 
-                insertKey(father.keys, k, cur.pos_in_father);
-                insertNode(father.children, n1, cur.pos_in_father);
+                int pos_in_father = cur.pos_in_father;
+                insertKey(father.keys, k, pos_in_father);
+                insertNode(father.children, n1, pos_in_father);
 
-                cur.father.children.set(cur.pos_in_father + 1, n2);
-                n1.pos_in_father = cur.pos_in_father;
-                n2.pos_in_father = cur.pos_in_father + 1;
+                cur.father.children.set(pos_in_father + 1, n2);
+                n1.pos_in_father = pos_in_father;
+                n2.pos_in_father = pos_in_father + 1;
 
+                cur.deleted = true;
                 cur = father;
             }
         }
@@ -163,6 +167,23 @@ public class BpTree {
     }
 
     public Integer find(Integer key){
+        Node cur = root;
+
+        // 先找到叶子节点
+        while(cur.children.size() >0){
+            int pos = 0;
+            while(pos < cur.keys.size() && ( key > cur.keys.get(pos)))
+                pos ++;
+            
+            cur = cur.children.get(pos);
+        }
+
+        // 再找对应的Key
+        int pos = 0;
+        while(pos < cur.keys.size() && ( key > cur.keys.get(pos)))
+            pos ++;
+
+
         return null;
     }
 
@@ -175,6 +196,22 @@ public class BpTree {
             cur.log();
             cur = cur.next;
         }
+    }
+
+    public ArrayList<Integer> scanAll2(){
+        Node cur = root;
+        while (cur.children.size()!=0)
+            cur = cur.children.get(0);
+
+        ArrayList<Integer> lst = new ArrayList<>();
+        while(cur != null){
+            for (int i = 0; i < cur.keys.size(); i ++)
+                lst.add(cur.keys.get(i));
+
+            cur = cur.next;
+        }
+
+        return lst;
     }
 
     public void walk(){
