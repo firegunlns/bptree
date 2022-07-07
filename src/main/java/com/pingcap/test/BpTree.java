@@ -16,6 +16,15 @@ public class BpTree <T_K extends Comparable<T_K>, T_V> {
             this.level = level;
     }
 
+    public boolean load(String fname){
+
+        return false;
+    }
+
+    public boolean save(String fname){
+        return false;
+    }
+
     private int findPos(ArrayList<T_K> keys, T_K key){
         int i = 0;
         for (; i < keys.size(); i ++)
