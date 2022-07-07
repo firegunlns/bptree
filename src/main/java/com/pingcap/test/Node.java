@@ -2,21 +2,28 @@ package com.pingcap.test;
 
 import java.util.ArrayList;
 
-public class Node {
+public class Node <T_K extends Comparable<T_K>, T_V>{
     static int counter = 0;
     int id;
-    ArrayList<Integer> keys;
-    ArrayList<Node> children;
-    Node father;
+
+    ArrayList<T_K> keys;
+    ArrayList<T_V> datas;
+
+    Node<T_K, T_V> father;
     int  pos_in_father;
-    Node next;
-    Node last;
+
+    ArrayList<Node<T_K, T_V>> children;
+
+    Node<T_K, T_V> next;
+    Node<T_K, T_V> last;
+
     boolean deleted;
 
     public Node(){
         counter ++;
         id = counter;
         keys = new ArrayList<>();
+        datas = new ArrayList<>();
         children = new ArrayList<>();
         father = null;
         pos_in_father = -1;
@@ -59,12 +66,12 @@ public class Node {
         System.out.println("-----------------");
     }
 
-    public void walk(Node from){
+    public void walk(Node<T_K, T_V> from){
         if (Debug.log == false)
             return;
 
         from.log();
-        for (Node node: from.children){
+        for (Node<T_K, T_V> node: from.children){
             walk(node);
         }
     }

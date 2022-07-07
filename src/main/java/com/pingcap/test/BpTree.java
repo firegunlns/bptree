@@ -2,11 +2,11 @@ package com.pingcap.test;
 
 import java.util.ArrayList;
 
-public class BpTree {
+public class BpTree <T_K extends Comparable<T_K>, T_V> {
     final int MAX_LEVEL = 10240;
     private int level = 3;
 
-    Node root;
+    Node<T_K, T_V> root;
     public int getLevel(){
         return level;
     }
@@ -16,28 +16,40 @@ public class BpTree {
             this.level = level;
     }
 
-    private int findPos(ArrayList<Integer> keys, Integer key){
+    private int findPos(ArrayList<T_K> keys, T_K key){
         int i = 0;
         for (; i < keys.size(); i ++)
-            if (key <= keys.get(i))
+            if (key.compareTo(keys.get(i)) <= 0)
                 break;
         return i;
     }
 
-    private void insertKey(ArrayList<Integer> keys, Integer key, int pos){
-        keys.add(0);
+    private <T> void insertObj(ArrayList<T> lst, T obj, int pos){
+        lst.add(null);
+        for (int i = lst.size() -1; i > pos; i --){
+            lst.set(i, lst.get(i - 1));
+        }
+        
+        lst.set(pos, obj);
+    }
+
+    private void insertKey(ArrayList<T_K> keys, T_K key, ArrayList<T_V> datas, T_V data, int pos){
+        keys.add(null);
+        datas.add(null);
         for (int i = keys.size() -1; i > pos; i --){
             try{
                 keys.set(i, keys.get(i - 1));
+                datas.set(i, datas.get(i - 1));
             }catch(Exception e){
                 e.printStackTrace();
             }
         }
         
         keys.set(pos, key);
+        datas.set(pos, data);
     }
 
-    private void insertNode(ArrayList<Node> nodes, Node node, int pos){
+    private void insertNode(ArrayList<Node<T_K, T_V>> nodes, Node<T_K, T_V> node, int pos){
         nodes.add(null);
         for (int i = nodes.size() - 1; i > pos; i --){
             nodes.set(i, nodes.get(i - 1));
@@ -48,16 +60,17 @@ public class BpTree {
         node.pos_in_father = pos;
     }
 
-    public boolean insert(Integer key){
+    public boolean insert(T_K key, T_V val){
         // 如果是空树，生成根节点
         if (root == null){
-            root = new Node();
+            root = new Node<T_K, T_V>();
             root.keys.add(key);
+            root.datas.add(val);
             return true;
         }
 
         // 不是空树，先找到要插入的叶子节点位置
-        Node cur = root;
+        Node<T_K, T_V> cur = root;
         while(cur.children.size() > 0){ // 叶子节点是没有孩子的
             int pos = findPos(cur.keys, key);
             cur = cur.children.get(pos);  // 继续搜索下一层节点
@@ -66,8 +79,9 @@ public class BpTree {
         // 叶子节点
         // 找到插入位置
         int pos = findPos(cur.keys, key);
-        // insert key
-        insertKey(cur.keys, key, pos);
+        // insert key & value
+        insertObj(cur.keys, key, pos);
+        insertObj(cur.datas, val, pos);
 
         // 分裂
         while( (cur.keys.size() + 1) > level){
@@ -76,11 +90,11 @@ public class BpTree {
             // 当前节点，分裂成n1和n2，n1 左边保留 m / 2 个key
             int n1_size = cur.keys.size() / 2;
 
-            Node n1 = new Node();
+            Node<T_K, T_V> n1 = new Node<T_K, T_V>();
             n1.father = cur.father;
             n1.pos_in_father = cur.pos_in_father;
 
-            Node n2 = new Node();
+            Node<T_K, T_V> n2 = new Node<T_K, T_V>();
             n2.father = cur.father;
             n2.pos_in_father = cur.pos_in_father + 1;
 
@@ -99,20 +113,28 @@ public class BpTree {
                     cur.last.next = n1;
             }
 
-            // 复制key到n1,n2
+            // 复制key和data到n1,n2
             for (int i = 0; i < cur.keys.size(); i ++){
-                if (i < n1_size)
+                if (i < n1_size){
                     n1.keys.add(cur.keys.get(i));
+                    if (cur.children.size() ==0)
+                        n1.datas.add(cur.datas.get(i));
+                }
                 else {
+                    // 叶子节点
+                    if  (cur.children.size() == 0){
+                        n2.keys.add(cur.keys.get(i));
+                        n2.datas.add(cur.datas.get(i));
+                    }
                     // 非叶子节点， 中间key上提，不保留n2
-                    if ((i > n1_size) || (cur.children.size() == 0))
+                    else if (i > n1_size) 
                         n2.keys.add(cur.keys.get(i));
                 }
             }
 
             // 复制children到n1,n2，调整children的指向和序pos_in_father 
             for (int i = 0; i < cur.children.size(); i ++){
-                Node child = cur.children.get(i);
+                Node<T_K, T_V> child = cur.children.get(i);
                 if (i <= n1_size){
                     n1.children.add(child);
                     child.father = n1;
@@ -126,10 +148,10 @@ public class BpTree {
             }
 
             // m / 2 + 1 位置的key要上提(copy)到父节点的原key位置的左边
-            Integer k = cur.keys.get(n1_size);
+            T_K k = cur.keys.get(n1_size);
 
             if (cur.father == null){ // 当前分裂的是根节点，生成一个新的根节点
-                Node n3 = new Node();
+                Node<T_K, T_V> n3 = new Node<T_K, T_V>();
                 root = n3;
 
                 n3.keys.add(k);
@@ -143,11 +165,11 @@ public class BpTree {
                 cur.deleted = true;
                 cur = n3;
             }else{
-                Node father = cur.father;
+                Node<T_K, T_V> father = cur.father;
                 n1.father = n2.father = father;
 
                 int pos_in_father = cur.pos_in_father;
-                insertKey(father.keys, k, pos_in_father);
+                insertObj(father.keys, k, pos_in_father);
                 insertNode(father.children, n1, pos_in_father);
 
                 cur.father.children.set(pos_in_father + 1, n2);
@@ -162,17 +184,17 @@ public class BpTree {
         return true;
     }
 
-    public boolean delete(Integer key){
+    public boolean delete(T_K key){
         return false;
     }
 
-    public Integer find(Integer key){
-        Node cur = root;
+    public T_V find(T_K key){
+        Node<T_K, T_V> cur = root;
 
         // 先找到叶子节点
         while(cur.children.size() >0){
             int pos = 0;
-            while(pos < cur.keys.size() && ( key > cur.keys.get(pos)))
+            while(pos < cur.keys.size() && ( key.compareTo(cur.keys.get(pos)) > 0) )
                 pos ++;
             
             cur = cur.children.get(pos);
@@ -180,15 +202,17 @@ public class BpTree {
 
         // 再找对应的Key
         int pos = 0;
-        while(pos < cur.keys.size() && ( key > cur.keys.get(pos)))
+        while(pos < cur.keys.size() && ( key.compareTo(cur.keys.get(pos)) > 0) )
             pos ++;
 
-
+        if (key.compareTo(cur.keys.get(pos)) == 0)
+            return cur.datas.get(pos);
+        
         return null;
     }
 
     public void scanAll(){
-        Node cur = root;
+        Node<T_K, T_V> cur = root;
         while (cur.children.size()!=0)
             cur = cur.children.get(0);
 
@@ -198,12 +222,12 @@ public class BpTree {
         }
     }
 
-    public ArrayList<Integer> scanAll2(){
-        Node cur = root;
+    public ArrayList<T_K> scanAll2(){
+        Node<T_K, T_V> cur = root;
         while (cur.children.size()!=0)
             cur = cur.children.get(0);
 
-        ArrayList<Integer> lst = new ArrayList<>();
+        ArrayList<T_K> lst = new ArrayList<>();
         while(cur != null){
             for (int i = 0; i < cur.keys.size(); i ++)
                 lst.add(cur.keys.get(i));
